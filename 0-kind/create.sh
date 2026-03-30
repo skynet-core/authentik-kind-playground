@@ -13,12 +13,25 @@ if [ -z "$DOCKER_REGISTRY_PAT" ]; then
     exit 1
 fi
 
+if [ -z "$LOCAL_HTTP_PORT" ]; then
+    echo "LOCAL_HTTP_PORT environment variable is not set"
+    exit 1
+fi
+
+if [ -z "$LOCAL_HTTPS_PORT" ]; then
+    echo "LOCAL_HTTPS_PORT environment variable is not set"
+    exit 1
+fi
+
 NAME="${NAME:-authentik}"
 
 if [ "$(kind get clusters | grep -c "$NAME")" -gt 0 ]; then
 	echo "Deleting cluster $NAME ..."
 	kind delete cluster --name "$NAME" || true
 fi
+
+cat "$DIR/cluster.yaml.tmpl" | sed -e "s/@HOST_HTTP_PORT@/$LOCAL_HTTP_PORT/g" \
+    sed -e "s/@HOST_HTTPS_PORT@/$LOCAL_HTTPS_PORT/g" >"$DIR/cluster.yaml"
 
 kind create cluster --name "$NAME" --config "$DIR/cluster.yaml"
 
