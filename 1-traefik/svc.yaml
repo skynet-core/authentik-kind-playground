@@ -1,0 +1,21 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: traefik
+  namespace: default
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      name: web
+      targetPort: web
+      protocol: TCP
+      nodePort: 30010
+    - port: 443
+      name: websecure
+      targetPort: websecure
+      protocol: TCP
+      nodePort: 30011
+  selector:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/instance: traefik-default

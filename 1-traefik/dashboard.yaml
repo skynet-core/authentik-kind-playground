@@ -1,0 +1,46 @@
+# kind: Secret
+# apiVersion: v1
+# metadata:
+#   name: dashboard-auth-secret
+#   namespace: default
+# stringData:
+#   password: NotSecure
+#   username: admin
+# type: kubernetes.io/basic-auth
+# ---
+kind: Middleware
+apiVersion: traefik.io/v1alpha1
+metadata:
+  name: dashboard-auth
+spec:
+  basicAuth:
+    secret: dashboard-auth-secret
+---
+# Source: traefik/templates/ingressroute.yaml
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: traefik-dashboard
+  namespace: default
+  labels:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/instance: traefik-default
+spec:
+  entryPoints:
+    - websecure
+  tls:
+    certResolver: le
+    domains:
+      - main: tradingpulse.ai
+        sans:
+          - ingress.tradingpulse.ai
+    secretName: authentik-tls
+  routes:
+    - match: Host(`ingress.tradingpulse.ai`)
+      kind: Rule
+      services:
+        - kind: TraefikService
+          name: api@internal
+
+      middlewares:
+        - name: dashboard-auth

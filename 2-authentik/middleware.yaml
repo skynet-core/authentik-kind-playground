@@ -1,0 +1,21 @@
+kind: Middleware
+apiVersion: traefik.io/v1alpha1
+metadata:
+  name: cors-allow-all
+spec:
+  headers:
+    accessControlAllowMethods:
+      - "GET"
+      - "OPTIONS"
+      - "PUT"
+      - "POST"
+      - "DELETE"
+      - "HEAD"
+      - "PATCH"
+    accessControlAllowHeaders:
+      - "*"
+    accessControlAllowOriginList:
+      - "*"
+    accessControlMaxAge: 100
+    accessControlAllowCredentials: true
+    addVaryHeader: true

@@ -1,0 +1,10 @@
+apiVersion: v1
+data:
+  AUTHENTIK_POSTGRESQL__HOST: authentik-postgresql
+  AUTHENTIK_POSTGRESQL__NAME: authentik
+  AUTHENTIK_POSTGRESQL__PORT: "5432"
+  AUTHENTIK_POSTGRESQL__USER: authentik
+kind: ConfigMap
+metadata:
+  name: authentik-postgresql-envs
+  namespace: default

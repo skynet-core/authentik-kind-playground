@@ -1,0 +1,139 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: traefik
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: traefik
+      app.kubernetes.io/instance: traefik-default
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  minReadySeconds: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: traefik-default
+        app.kubernetes.io/name: traefik
+    spec:
+      automountServiceAccountToken: true
+      containers:
+        - args:
+            - --certificatesresolvers.le.acme.email=skynet.vasyl@gmail.com
+            - --certificatesresolvers.le.acme.storage=/data/acme.json
+            - --certificatesresolvers.le.acme.httpChallenge.entrypoint=web
+            - --certificatesresolvers.le.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory
+            - --entryPoints.metrics.address=:9100/tcp
+            - --entryPoints.traefik.address=:8080/tcp
+            - --entryPoints.web.address=:80/tcp
+            - --entryPoints.websecure.address=:443/tcp
+            - --api=true
+            - --api.dashboard=true
+            - --api.insecure=true
+            - --ping=true
+            - --metrics.prometheus=true
+            - --metrics.prometheus.entrypoint=metrics
+            - --metrics.prometheus.addRoutersLabels=true
+            - --metrics.prometheus.addServicesLabels=true
+            - --providers.kubernetescrd
+            - --providers.kubernetescrd.namespaces=default
+            - --providers.kubernetescrd.allowEmptyServices=true
+            - --providers.kubernetesgateway
+            - --providers.kubernetesgateway.statusaddress.service.name=traefik
+            - --providers.kubernetesgateway.statusaddress.service.namespace=default
+            - --entryPoints.web.http.redirections.entryPoint.to=websecure
+            - --entryPoints.web.http.redirections.entryPoint.scheme=https
+            - --entryPoints.web.http.redirections.entryPoint.permanent=true
+            - --entryPoints.web.http.sanitizePath=true
+            - --entryPoints.websecure.http.tls=true
+            - --log.level=INFO
+            - --accesslog=true
+            - --accesslog.fields.defaultmode=keep
+            - --accesslog.fields.headers.defaultmode=drop
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: USER
+              value: traefik
+          image: docker.io/traefik:v3.6.12
+          imagePullPolicy: IfNotPresent
+          lifecycle: {}
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /ping
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 2
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 2
+          readinessProbe:
+            failureThreshold: 1
+            httpGet:
+              path: /ping
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 2
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 2
+          name: traefik
+          ports:
+            - containerPort: 9100
+              name: metrics
+              protocol: TCP
+            - containerPort: 8080
+              name: traefik
+              protocol: TCP
+            - containerPort: 80
+              name: web
+              protocol: TCP
+            - containerPort: 443
+              name: websecure
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+            requests:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - mountPath: /data
+              name: data
+            - mountPath: /tmp
+              name: tmp
+      hostNetwork: false
+      securityContext:
+        runAsGroup: 65532
+        runAsNonRoot: true
+        runAsUser: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: traefik
+      terminationGracePeriodSeconds: 60
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: traefik
+        - emptyDir: {}
+          name: tmp

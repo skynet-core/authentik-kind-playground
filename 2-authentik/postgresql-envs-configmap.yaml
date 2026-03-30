@@ -1,0 +1,8 @@
+apiVersion: v1
+data:
+  POSTGRES_DB: authentik
+  POSTGRES_USER: authentik
+kind: ConfigMap
+metadata:
+  name: postgresql-envs
+  namespace: default
