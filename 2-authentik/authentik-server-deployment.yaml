@@ -47,6 +47,8 @@ spec:
                 name: authentik-common
             - configMapRef:
                 name: authentik-postgresql-envs
+            - configMapRef:
+                name: authentik-smpt-config
           ports:
             - name: http
               containerPort: 9000

@@ -30,10 +30,10 @@ if [ "$(kind get clusters | grep -c "$NAME")" -gt 0 ]; then
 	kind delete cluster --name "$NAME" || true
 fi
 
-cat "$DIR/cluster.yaml.tmpl" | sed -e "s/@HOST_HTTP_PORT@/$LOCAL_HTTP_PORT/g" \
-	-e "s/@HOST_HTTPS_PORT@/$LOCAL_HTTPS_PORT/g" >"$DIR/cluster.yaml"
+cat "$DIR/cluster.tmpl.yaml" | sed -e "s/\$HOST_HTTP_PORT/$LOCAL_HTTP_PORT/g" \
+	-e "s/\$HOST_HTTPS_PORT/$LOCAL_HTTPS_PORT/g" >"$DIR/cluster.generated.yaml"
 
-kind create cluster --name "$NAME" --config "$DIR/cluster.yaml"
+kind create cluster --name "$NAME" --config "$DIR/cluster.generated.yaml"
 
 printf "\033[32m Cluster %s created successfully! \033[0m" "$NAME"
 kubectl config use-context "kind-$NAME"

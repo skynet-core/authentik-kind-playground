@@ -46,7 +46,7 @@ else
 	AUTH_SECRET="$(cat "$DIR/dashboard-auth.secret")"
 fi
 
-if ! kubectl get secret dashboard-auth-secret --no-headers >/dev/null; then
+if ! kubectl get secret dashboard-auth-secret --no-headers 1>/dev/null 2>&1; then
 	printf "\033[32m #1 Create Traefix Basic Auth Dashboard secret ... \033[0m\n"
 	kubectl create secret generic dashboard-auth-secret \
 		--namespace default \

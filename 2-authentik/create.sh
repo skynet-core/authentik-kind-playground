@@ -44,6 +44,30 @@ kubectl apply -f "$DIR/postgresql-svc.yaml"
 printf "\033[32m Deploying CORS middlewares ... \033[0m"
 kubectl apply -f "$DIR/middleware.yaml"
 
+printf "\033[32m Create Authentik SMPT Configmap ...\033[0m"
+SMTP_RELAY_SERVER="${SMTP_RELAY_SERVER:-localhost}"
+SMTP_RELAY_PORT="${SMTP_RELAY_PORT:-25}"
+SMTP_RELAY_USER="${SMTP_RELAY_USER:-}"
+SMTP_RELAY_PASSWORD="${SMTP_RELAY_PASSWORD:-}"
+SMPT_EMAIL_USE_STARTTLS="${SMPT_EMAIL_USE_STARTTLS:-false}"
+SMPT_EMAIL_USE_SSL="${SMPT_EMAIL_USE_SSL:-false}"
+SMTP_EMAIL_TIMEOUT="${SMTP_EMAIL_TIMEOUT:-10}"
+SMPT_EMAIL_FROM="${SMPT_EMAIL_FROM:-authentik@localhost}"
+
+cat "$DIR/authentik-smpt-configmap.tmpl.yaml" |
+	sed -e "s/\$SMTP_RELAY_SERVER/$SMTP_RELAY_SERVER/g" \
+		-e "s/\$SMTP_RELAY_PORT/$SMTP_RELAY_PORT/g" \
+		-e "s/\$SMTP_RELAY_USER/$SMTP_RELAY_USER/g" \
+		-e "s/\$SMTP_RELAY_PASSWORD/$SMTP_RELAY_PASSWORD/g" \
+		-e "s/\$SMPT_EMAIL_USE_STARTTLS/$SMPT_EMAIL_USE_STARTTLS/g" \
+		-e "s/\$SMPT_EMAIL_USE_SSL/$SMPT_EMAIL_USE_SSL/g" \
+		-e "s/\$SMPT_EMAIL_FROM/$SMPT_EMAIL_FROM/g" \
+		-e "s/\$SMTP_EMAIL_TIMEOUT/$SMTP_EMAIL_TIMEOUT/g" \
+		>"$DIR/authentik-smpt-configmap.generated.yaml"
+
+printf "\033[32m Deploying Authentik SMPT Config ... \033[0m"
+kubectl apply -f "$DIR/authentik-smpt-configmap.generated.yaml"
+
 printf "\033[32m Deploying Authentik Common Config ... \033[0m"
 kubectl apply -f "$DIR/authentik-common-configmap.yaml"
 
@@ -68,7 +92,7 @@ else
 	ADMIN_TOKEN="$(cat "$DIR/authentik-admin-token.secret")"
 fi
 
-if ! kubectl get secret authentik-password --no-headers >/dev/null; then
+if ! kubectl get secret authentik-password --no-headers 1>/dev/null 2>&1; then
 	kubectl create secret generic authentik-password \
 		--namespace default \
 		--from-literal=AUTHENTIK_BOOTSTRAP_PASSWORD="$ADMIN_PASSWORD" \
@@ -105,3 +129,5 @@ kubectl wait --timeout=5m -n default \
 
 printf "\033[32m #2 Deploying Authentik Ingress ... \033[0m\n"
 kubectl apply -f "$DIR/authentik-ingress.yaml"
+
+printf "\033[32m Authentic deployed \033[0m\n"

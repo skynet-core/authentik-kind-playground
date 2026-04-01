@@ -7,8 +7,8 @@ nodes:
   - role: control-plane
     extraPortMappings:
       - containerPort: 30010
-        hostPort: @HOST_HTTP_PORT@
+        hostPort: $HOST_HTTP_PORT
         protocol: TCP
       - containerPort: 30011
-        hostPort: @HOST_HTTPS_PORT@
+        hostPort: $HOST_HTTPS_PORT
         protocol: TCP

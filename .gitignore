@@ -3,4 +3,6 @@
 .DS_Store
 .env
 *.env
-cluster.yaml
+*.generated.*
+*.log
+.vscode/

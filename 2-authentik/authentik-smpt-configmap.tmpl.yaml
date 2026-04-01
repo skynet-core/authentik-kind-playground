@@ -1,0 +1,19 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: authentik-smpt-config
+  namespace: default
+  labels:
+    app.kubernetes.io/name: "authentik"
+    app.kubernetes.io/instance: "authentik"
+    app.kubernetes.io/part-of: "authentik"
+    app.kubernetes.io/version: "2026.2.1"
+data:
+  AUTHENTIK_EMAIL__HOST: "$SMTP_RELAY_SERVER"
+  AUTHENTIK_EMAIL__PORT: "$SMTP_RELAY_PORT"
+  AUTHENTIK_EMAIL__USERNAME: "$SMTP_RELAY_USER"
+  AUTHENTIK_EMAIL__PASSWORD: "$SMTP_RELAY_PASSWORD"
+  AUTHENTIK_EMAIL__USE_TLS: "$SMPT_EMAIL_USE_STARTTLS"
+  AUTHENTIK_EMAIL__USE_SSL: "$SMPT_EMAIL_USE_SSL"
+  AUTHENTIK_EMAIL__TIMEOUT: "$SMTP_EMAIL_TIMEOUT"
+  AUTHENTIK_EMAIL__FROM: "$SMPT_EMAIL_FROM"
