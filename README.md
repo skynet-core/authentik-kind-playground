@@ -1,6 +1,5 @@
 # Authentik + Traefik
 
-
 ## Prerequisites
 
 1. Docker CE installed on your machine.
@@ -10,14 +9,14 @@
 
 ## Configuration
 
-1. Clone the repository:
+Clone the repository:
 
 ```bash
 git clone https://github.com/skynet-core/authentik-kind-playground
 cd authentik-kind-playground
 ```
 
-2. Create .env file with the following content:
+Create .env file with the following content:
 
 ```bash
 # .env
@@ -29,13 +28,8 @@ LOCAL_HTTP_PORT="<YOUR_LOCAL_HTTP_PORT>"
 LOCAL_HTTPS_PORT="<YOUR_LOCAL_HTTPS_PORT>"
 ```
 
-3. Forward the local ports to the remote VPS using SSH:
+Run cluster
 
-```bash
-./forward.sh
-```
-
-4. Run cluster
 ```bash
 ./run.sh
 ```

@@ -85,7 +85,13 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 3
-          resources: {}
+          resources:
+            requests:
+              cpu: "1"
+              memory: 1Gi
+            limits:
+              cpu: "2"
+              memory: 2Gi
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:

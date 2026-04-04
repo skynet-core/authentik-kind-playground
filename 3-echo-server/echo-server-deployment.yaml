@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: echo-server
+  template:
+    metadata:
+      labels:
+        app: echo-server
+    spec:
+      containers:
+        - image: docker.io/ealen/echo-server:latest
+          name: echo-server
+          env:
+            - name: "PORT"
+              value: "80"
+            - name: "LOGS__IGNORE__PING"
+              value: "false"
+            - name: "ENABLE__HOST"
+              value: "true"
+            - name: "ENABLE__HTTP"
+              value: "true"
+            - name: "ENABLE__REQUEST"
+              value: "true"
+            - name: "ENABLE__COOKIES"
+              value: "true"
+            - name: "ENABLE__HEADER"
+              value: "true"
+            - name: "ENABLE__ENVIRONMENT"
+              value: "false"
+            - name: "ENABLE__FILE"
+              value: "false"
+          ports:
+            - containerPort: 80
+              name: http
+          resources:
+            limits:
+              cpu: 250m
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi

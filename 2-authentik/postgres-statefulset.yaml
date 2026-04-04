@@ -1,0 +1,160 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: authentik-postgresql
+  namespace: default
+  labels:
+    app.kubernetes.io/instance: authentik
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/version: "18.3.0"
+    app.kubernetes.io/component: primary
+spec:
+  replicas: 1
+  serviceName: authentik-postgresql-hl
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate: {}
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: authentik
+      app.kubernetes.io/name: postgresql
+      app.kubernetes.io/version: "18.3.0"
+      app.kubernetes.io/component: primary
+  template:
+    metadata:
+      name: authentik-postgresql
+      labels:
+        app.kubernetes.io/instance: authentik
+        app.kubernetes.io/name: postgresql
+        app.kubernetes.io/version: "18.3.0"
+        app.kubernetes.io/component: primary
+    spec:
+      serviceAccountName: authentik-postgresql
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 70
+        fsGroupChangePolicy: OnRootMismatch
+      hostNetwork: false
+      hostIPC: false
+      initContainers:
+        - name: fix-permissions
+          image: busybox
+          command:
+            - sh
+            - -c
+            - chown -R 70:70 /var/lib/postgresql
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: postgresql-data
+              mountPath: /var/lib/postgresql
+      containers:
+        - name: postgresql
+          image: docker.io/postgres:18.3-alpine3.23
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              cpu: 400m
+              ephemeral-storage: 2Gi
+              memory: 256Mi
+            requests:
+              cpu: 200m
+              ephemeral-storage: 500Mi
+              memory: 128Mi
+          args:
+            - -c
+            - config_file=/etc/postgresql/postgresql.conf
+            - -c
+            - hba_file=/etc/postgresql/pg_hba.conf
+          env:
+            - name: PGDATA
+              value: /var/lib/postgresql/18/docker
+          envFrom:
+            - configMapRef:
+                name: postgresql-envs
+            - secretRef:
+                name: postgresql-password
+          ports:
+            - name: tcp-postgresql
+              containerPort: 5432
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - exec pg_isready -U "$POSTGRES_USER" -d "dbname=$POSTGRES_DB" -h 127.0.0.1 -p 5432
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - exec pg_isready -U "$POSTGRES_USER" -d "dbname=$POSTGRES_DB" -h 127.0.0.1 -p 5432
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsUser: 70
+            runAsGroup: 70
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: run
+              mountPath: /var/run/postgresql
+            - name: dshm
+              mountPath: /dev/shm
+            - name: init-sql
+              mountPath: /docker-entrypoint-initdb.d
+            - name: postgresql-config
+              mountPath: /etc/postgresql
+              readOnly: true
+            - name: postgresql-extended-config
+              mountPath: /etc/postgresql/conf.d
+              readOnly: true
+            - name: postgresql-data
+              mountPath: /var/lib/postgresql
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: run
+          emptyDir: {}
+        - name: dshm
+          emptyDir:
+            medium: Memory
+        - name: init-sql
+          configMap:
+            name: postgresql-init-scripts
+        - name: postgresql-config
+          configMap:
+            name: authentik-postgresql-configuration
+        - name: postgresql-extended-config
+          configMap:
+            name: authentik-postgresql-extended-configuration
+  volumeClaimTemplates:
+    - metadata:
+        name: postgresql-data
+        labels:
+          app.kubernetes.io/instance: authentik
+          app.kubernetes.io/name: postgresql
+          app.kubernetes.io/version: 18.3.0
+          app.kubernetes.io/component: primary
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 8Gi
+        storageClassName: "standard"

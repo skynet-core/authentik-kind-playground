@@ -32,14 +32,17 @@ if ! kubectl get secret postgresql-password --no-headers >/dev/null; then
 		--from-literal=POSTGRES_PASSWORD="$POSTGRES_PASSWORD"
 fi
 
-printf "\033[32m #2 Deploying Postgresql ... \033[0m\n"
-kubectl apply -f "$DIR/postgresql-deployment.yaml"
-
-kubectl wait --timeout=5m -n default \
-	deployment.apps/authentik-postgresql --for=condition=Available
-
 printf "\033[32m #2 Deploying Postgresql Service ... \033[0m\n"
 kubectl apply -f "$DIR/postgresql-svc.yaml"
+
+printf "\033[32m #2 Deploying Postgresql ... \033[0m\n"
+kubectl apply -f "$DIR/postgres-statefulset.yaml"
+
+# kubectl wait --timeout=5m -n default \
+# 	deployment.apps/authentik-postgresql --for=condition=Available
+
+kubectl rollout status --timeout=10m -n default \
+	statefulset.apps/authentik-postgresql
 
 printf "\033[32m Deploying CORS middlewares ... \033[0m"
 kubectl apply -f "$DIR/middleware.yaml"

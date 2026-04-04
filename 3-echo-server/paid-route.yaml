@@ -1,0 +1,28 @@
+kind: IngressRoute
+apiVersion: traefik.io/v1alpha1
+metadata:
+  name: echo-server-paid
+  namespace: default
+  labels:
+    app.kubernetes.io/name: "authentik"
+    app.kubernetes.io/instance: "echo-server"
+    app.kubernetes.io/component: "paid"
+    app.kubernetes.io/part-of: "authentik"
+    app.kubernetes.io/version: "2026.2.1"
+spec:
+  entryPoints:
+    - websecure
+  tls:
+    certResolver: le
+    domains:
+      - main: tradingpulse.ai
+    secretName: authentik-tls
+  routes:
+    - match: Host(`tradingpulse.ai`) && PathPrefix(`/paid`)
+      kind: Rule
+      services:
+        - kind: Service
+          name: echo-server
+          port: 80
+      middlewares:
+        - name: cors-allow-all
